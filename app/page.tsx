@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
-const products = [
-  { icon: '✦', name: 'Answer Studio', tag: 'Knowledge', color: '#ff7849', text: 'Find trusted answers across your organisation, with clear source links.' },
-  { icon: '◎', name: 'Prompt Lab', tag: 'Productivity', color: '#18a999', text: 'Test, refine and save prompts for repeatable everyday workflows.' },
-  { icon: '↗', name: 'Insight Lens', tag: 'Analytics', color: '#6c63ff', text: 'Turn complex feedback into themes your team can act on quickly.' },
-  { icon: '◇', name: 'Doc Companion', tag: 'Writing', color: '#e7488a', text: 'Draft and improve clear documents while keeping people in control.' },
+type Product = { name: string; tag: string; color: string; icon: string; text: string; visible: boolean }
+type View = 'home' | 'products' | 'updates' | 'stories'
+
+const starterProducts: Product[] = [
+  { icon: '✦', name: 'Answer Studio', tag: 'Knowledge', color: '#ff7849', text: 'Find trusted answers across your organisation, with clear source links.', visible: true },
+  { icon: '◎', name: 'Prompt Lab', tag: 'Productivity', color: '#18a999', text: 'Test, refine and save prompts for repeatable everyday workflows.', visible: true },
+  { icon: '↗', name: 'Insight Lens', tag: 'Analytics', color: '#6c63ff', text: 'Turn complex feedback into themes your team can act on quickly.', visible: true },
+  { icon: '◇', name: 'Doc Companion', tag: 'Writing', color: '#e7488a', text: 'Draft and improve clear documents while keeping people in control.', visible: true },
 ]
 
 const stories = [
@@ -15,71 +18,63 @@ const stories = [
   { category: 'FIELD NOTES', title: 'Five lessons from user testing', excerpt: 'What early feedback taught us about clarity, trust and useful defaults.', time: '6 min read', tone: 'teal' },
 ]
 
+const updates = [
+  { month: 'August 2026', product: 'Answer Studio', title: 'Source confidence is now visible', summary: 'Readers can quickly understand where an answer came from and when it was last reviewed.', tag: 'New feature', color: '#ff7849' },
+  { month: 'August 2026', product: 'Prompt Lab', title: 'Shared prompt collections', summary: 'Teams can organise reusable prompts by workflow and share them with colleagues.', tag: 'Improvement', color: '#18a999' },
+  { month: 'July 2026', product: 'Insight Lens', title: 'Faster theme exploration', summary: 'A redesigned results view makes it easier to compare themes and supporting feedback.', tag: 'Research', color: '#6c63ff' },
+]
+
 export default function Home() {
+  const [mode, setMode] = useState<'site' | 'editor'>('site')
+  const [view, setView] = useState<View>('home')
+  const [editorView, setEditorView] = useState<View>('home')
+  const [products, setProducts] = useState(starterProducts)
   const [query, setQuery] = useState('')
-  const visibleProducts = products.filter((item) =>
-    `${item.name} ${item.tag} ${item.text}`.toLowerCase().includes(query.toLowerCase())
-  )
+  const [heroBlack, setHeroBlack] = useState('Discover what AI')
+  const [heroAccent, setHeroAccent] = useState('can do for you.')
+  const [heroDescription, setHeroDescription] = useState('Explore useful tools, learn from real stories, and build the confidence to use AI thoughtfully at work.')
+  const [updateTitle, setUpdateTitle] = useState('A clearer way to understand every answer')
+  const [updateSummary, setUpdateSummary] = useState('We redesigned source details to make trust signals easier to scan and understand.')
+  const [updateProgress, setUpdateProgress] = useState('Introduced source freshness labels and a simpler citation layout.')
+  const [updateNext, setUpdateNext] = useState('Test the new layout with frequent knowledge-hub users.')
+  const [updatePublished, setUpdatePublished] = useState(true)
+  const [storyTitle, setStoryTitle] = useState('Designing AI experiences people can trust')
+  const [storyExcerpt, setStoryExcerpt] = useState('What we learned while turning complex system signals into clear, human-centred guidance.')
+  const [storyContent, setStoryContent] = useState('Trust is not a single feature. It is the result of clear language, useful context and thoughtful interaction design working together.')
+  const [saved, setSaved] = useState(false)
+  const visibleProducts = useMemo(() => products.filter(p => p.visible && `${p.name} ${p.tag} ${p.text}`.toLowerCase().includes(query.toLowerCase())), [products, query])
+  const save = () => { setSaved(true); window.setTimeout(() => setSaved(false), 1800) }
+  const moveProduct = (index: number, direction: -1 | 1) => setProducts(current => { const target=index+direction;if(target<0||target>=current.length)return current;const next=[...current];[next[index],next[target]]=[next[target],next[index]];return next })
+  const openPublic = (next: View) => { setView(next); setMode('site'); window.scrollTo({top:0,behavior:'smooth'}) }
 
-  return (
-    <main>
-      <div className="demo-note">Independent portfolio recreation · All names and data are fictional</div>
-      <nav className="nav shell" aria-label="Main navigation">
-        <a className="brand" href="#top" aria-label="AI Hub home"><span>AI</span> Hub</a>
-        <div className="nav-links">
-          <a href="#products">Products</a><a href="#stories">Stories</a><a href="#about">About</a>
-        </div>
-        <button className="avatar" aria-label="Demo profile">SL</button>
-      </nav>
+  const editorProps = { editorView,setEditorView,openPublic,products,setProducts,moveProduct,heroBlack,setHeroBlack,heroAccent,setHeroAccent,heroDescription,setHeroDescription,updateTitle,setUpdateTitle,updateSummary,setUpdateSummary,updateProgress,setUpdateProgress,updateNext,setUpdateNext,updatePublished,setUpdatePublished,storyTitle,setStoryTitle,storyExcerpt,setStoryExcerpt,storyContent,setStoryContent,saved,save }
+  if (mode === 'editor') return <EditorExperience {...editorProps}/>
 
-      <section id="top" className="hero shell">
-        <div className="hero-copy">
-          <p className="eyebrow">YOUR GUIDE TO PRACTICAL AI</p>
-          <h1>Discover what AI<br /><em>can do for you.</em></h1>
-          <p className="lede">Explore useful tools, learn from real stories, and build the confidence to use AI thoughtfully at work.</p>
-          <a className="primary" href="#products">Explore the hub <span>↓</span></a>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orbit orbit-one" /><div className="orbit orbit-two" />
-          <div className="spark s1">✦</div><div className="spark s2">✧</div><div className="spark s3">✦</div>
-          <div className="core"><span>AI</span><small>made useful</small></div>
-          <div className="floating-card card-one"><b>24</b><span>ideas explored</span></div>
-          <div className="floating-card card-two"><b>8 min</b><span>time saved</span></div>
-        </div>
-      </section>
-
-      <section id="products" className="products-section">
-        <div className="shell">
-          <div className="section-head">
-            <div><p className="eyebrow">TOOLS TO TRY</p><h2>Meet your AI toolkit</h2></div>
-            <label className="search"><span>⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tools" aria-label="Search tools" /></label>
-          </div>
-          <div className="product-grid">
-            {visibleProducts.map((product) => (
-              <article className="product-card" key={product.name} style={{ '--accent': product.color } as React.CSSProperties}>
-                <div className="product-icon">{product.icon}</div><span className="tag">{product.tag}</span>
-                <h3>{product.name}</h3><p>{product.text}</p><button>View product <span>↗</span></button>
-              </article>
-            ))}
-          </div>
-          {visibleProducts.length === 0 && <p className="empty">No tools match “{query}”. Try another search.</p>}
-        </div>
-      </section>
-
-      <section id="stories" className="stories shell">
-        <div className="section-head"><div><p className="eyebrow">WHAT'S HAPPENING</p><h2>Ideas from the community</h2></div><a href="#stories">View all stories →</a></div>
-        <div className="story-grid">
-          {stories.map((story, index) => <article className="story-card" key={story.title}>
-            <div className={`story-art ${story.tone}`}><span>0{index + 1}</span><i>✦</i></div>
-            <div className="story-body"><small>{story.category}</small><h3>{story.title}</h3><p>{story.excerpt}</p><footer><span>{story.time}</span><b>Read story ↗</b></footer></div>
-          </article>)}
-        </div>
-      </section>
-
-      <section id="about" className="about">
-        <div className="shell about-inner"><p className="eyebrow">WHY THIS EXISTS</p><h2>AI feels more useful when<br />people learn together.</h2><p>This concept brings product discovery, practical guidance and community stories into one welcoming place.</p><a className="secondary" href="#top">Back to top ↑</a></div>
-      </section>
-      <footer className="footer shell"><a className="brand" href="#top"><span>AI</span> Hub</a><p>Portfolio recreation · Built with fictional content</p><p>© 2026</p></footer>
-    </main>
-  )
+  return <main>
+    <div className="demo-note"><span>Independent portfolio recreation · All names and data are fictional</span><button onClick={()=>setMode('editor')}>Open interactive editor <b>↗</b></button></div>
+    <nav className="nav shell"><button className="brand brand-button" onClick={()=>setView('home')}><span>AI</span> Hub</button><div className="nav-links">{(['products','updates','stories'] as View[]).map(item=><button key={item} className={view===item?'active':''} onClick={()=>setView(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}</div><button className="avatar">SL</button></nav>
+    {view==='home'&&<><section className="hero shell"><div className="hero-copy"><p className="eyebrow">YOUR GUIDE TO PRACTICAL AI</p><h1>{heroBlack}<br/><em>{heroAccent}</em></h1><p className="lede">{heroDescription}</p><button className="primary" onClick={()=>setView('products')}>Explore the hub <span>→</span></button></div><HeroArt/></section><section className="products-section"><div className="shell"><SectionHeading eyebrow="TOOLS TO TRY" title="Meet your AI toolkit"/><ProductGrid products={products.filter(p=>p.visible)} onOpen={()=>setView('products')}/></div></section><section className="stories shell"><SectionHeading eyebrow="WHAT'S HAPPENING" title="Ideas from the community" action="View all stories →" onAction={()=>setView('stories')}/><StoryGrid/></section></>}
+    {view==='products'&&<section className="listing shell"><PageIntro eyebrow="PRODUCT CATALOGUE" title="Tools built around real work" description="Explore practical AI products, understand where they help, and find the right starting point."/><label className="search wide"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search by tool, capability or workflow"/></label><ProductGrid products={visibleProducts}/>{!visibleProducts.length&&<p className="empty">No tools match “{query}”.</p>}</section>}
+    {view==='updates'&&<UpdatesView/>}
+    {view==='stories'&&<section className="listing shell"><PageIntro eyebrow="STORIES & GUIDES" title="Learn from people doing the work" description="Practical lessons, product thinking and honest reflections from across the AI community."/><div className="filter-pills"><button className="selected">All stories</button><button>How we work</button><button>Product spotlight</button><button>Field notes</button></div><StoryGrid/></section>}
+    <section className="about"><div className="shell about-inner"><p className="eyebrow">PORTFOLIO WALKTHROUGH</p><h2>Want to see how content<br/>gets made?</h2><p>Switch into the interactive editor to change page copy, curate products, draft updates and preview stories.</p><button className="secondary" onClick={()=>setMode('editor')}>Explore the editor ↗</button></div></section>
+    <footer className="footer shell"><span className="brand"><span>AI</span> Hub</span><p>Portfolio recreation · Built with fictional content</p><p>© 2026</p></footer>
+  </main>
 }
+
+function EditorExperience(p:any){const nav:{key:View,label:string,icon:string}[]=[{key:'home',label:'Homepage',icon:'⌂'},{key:'products',label:'Products',icon:'◇'},{key:'updates',label:'Updates',icon:'↗'},{key:'stories',label:'Stories',icon:'≡'}];return <main className="editor-app"><header className="editor-topbar"><div className="editor-brand"><span className="brand"><span>AI</span> Hub</span><i/><b>Site Editor</b><small>PORTFOLIO DEMO</small></div><button onClick={()=>p.openPublic(p.editorView)}>Exit editor <span>↗</span></button></header><div className="editor-layout"><aside className="editor-sidebar"><p>PAGES & CONTENT</p>{nav.map(item=><button key={item.key} className={p.editorView===item.key?'active':''} onClick={()=>p.setEditorView(item.key)}><span>{item.icon}</span>{item.label}<b>›</b></button>)}<div className="editor-tip"><span>✦</span><b>Try it yourself</b><p>Every change updates the preview using local demo state.</p></div></aside><section className="editor-workspace"><div className="editor-context"><div><p>EDITING</p><h1>{nav.find(n=>n.key===p.editorView)?.label}</h1></div><div className="save-actions">{p.saved&&<span>✓ Changes saved</span>}<button className="preview-btn" onClick={()=>p.openPublic(p.editorView)}>Preview live</button><button className="save-btn" onClick={p.save}>Save changes</button></div></div>{p.editorView==='home'&&<HomepageEditor {...p}/>} {p.editorView==='products'&&<ProductsEditor {...p}/>} {p.editorView==='updates'&&<UpdatesEditor {...p}/>} {p.editorView==='stories'&&<StoriesEditor {...p}/>}</section></div></main>}
+
+function HomepageEditor(p:any){return <div className="edit-grid"><div className="edit-panel"><PanelTitle step="01" title="Hero message" subtitle="Shape the first thing people see."/><Field label="Statement"><input value={p.heroBlack} onChange={e=>p.setHeroBlack(e.target.value)}/></Field><Field label="Accent line"><input value={p.heroAccent} onChange={e=>p.setHeroAccent(e.target.value)}/></Field><Field label="Supporting description"><textarea rows={4} value={p.heroDescription} onChange={e=>p.setHeroDescription(e.target.value)}/></Field><div className="image-field"><p>HERO VISUAL</p><div><span>✦</span><b>Abstract AI constellation</b><small>Demo artwork · CSS generated</small><button>Replace</button></div></div></div><div className="preview-panel"><PreviewHeader label="LIVE HOMEPAGE PREVIEW"/><div className="mini-home"><div><small>YOUR GUIDE TO PRACTICAL AI</small><h2>{p.heroBlack}<em>{p.heroAccent}</em></h2><p>{p.heroDescription}</p><button>Explore the hub →</button></div><HeroArt compact/></div><div className="preview-note"><span>●</span> Preview updates as you type</div></div></div>}
+function ProductsEditor(p:any){return <div className="editor-card"><PanelTitle step="02" title="Curate the product catalogue" subtitle="Reorder tools and control what appears on the live site."/><div className="product-admin-list">{p.products.map((product:Product,index:number)=><div className="admin-product" key={product.name}><span className="drag">⋮⋮</span><span className="admin-product-icon" style={{background:product.color}}>{product.icon}</span><div><b>{product.name}</b><small>{product.tag} · {product.text}</small></div><div className="order-controls"><button disabled={index===0} onClick={()=>p.moveProduct(index,-1)}>↑</button><button disabled={index===p.products.length-1} onClick={()=>p.moveProduct(index,1)}>↓</button></div><label className="switch"><input type="checkbox" checked={product.visible} onChange={()=>p.setProducts((items:Product[])=>items.map((x,i)=>i===index?{...x,visible:!x.visible}:x))}/><span/></label><button className="edit-row">Edit</button></div>)}</div><div className="catalogue-preview"><PreviewHeader label="LIVE CATALOGUE ORDER"/><ProductGrid products={p.products.filter((x:Product)=>x.visible)}/></div></div>}
+function UpdatesEditor(p:any){return <div className="edit-grid"><div className="edit-panel"><div className="status-row"><span className={p.updatePublished?'status-live':'status-draft'}>● {p.updatePublished?'Published':'Draft'}</span><label className="switch"><input type="checkbox" checked={p.updatePublished} onChange={()=>p.setUpdatePublished(!p.updatePublished)}/><span/></label></div><PanelTitle step="03" title="Compose a structured update" subtitle="Make progress easy to scan, compare and discuss."/><Field label="Update title"><input value={p.updateTitle} onChange={e=>p.setUpdateTitle(e.target.value)}/></Field><Field label="Short summary"><textarea rows={3} value={p.updateSummary} onChange={e=>p.setUpdateSummary(e.target.value)}/></Field><div className="two-fields"><Field label="Product"><select><option>Answer Studio</option><option>Prompt Lab</option></select></Field><Field label="Update type"><select><option>New feature</option><option>Improvement</option></select></Field></div><Field label="Progress made"><textarea rows={3} value={p.updateProgress} onChange={e=>p.setUpdateProgress(e.target.value)}/></Field><Field label="What's next"><textarea rows={3} value={p.updateNext} onChange={e=>p.setUpdateNext(e.target.value)}/></Field></div><div className="preview-panel"><PreviewHeader label="READER PREVIEW"/><div className="update-detail-preview"><span>ANSWER STUDIO · AUGUST 2026</span><h2>{p.updateTitle}</h2><p>{p.updateSummary}</p><section><b>Progress made</b><p>{p.updateProgress}</p></section><section><b>What’s next</b><p>{p.updateNext}</p></section><footer><button>♡ Save</button><button>◯ Discuss</button></footer></div></div></div>}
+function StoriesEditor(p:any){return <div className="edit-grid"><div className="edit-panel"><PanelTitle step="04" title="Build an editorial story" subtitle="Draft with a clear hierarchy and preview the reading experience."/><Field label="Story title"><input value={p.storyTitle} onChange={e=>p.setStoryTitle(e.target.value)}/></Field><Field label="Excerpt"><textarea rows={3} value={p.storyExcerpt} onChange={e=>p.setStoryExcerpt(e.target.value)}/></Field><div className="two-fields"><Field label="Category"><select><option>How we work</option><option>Field notes</option></select></Field><Field label="Author"><select><option>Jordan Lee</option><option>Maya Chen</option></select></Field></div><Field label="Article body"><div className="rich-toolbar"><button><b>B</b></button><button><i>I</i></button><button>H2</button><button>☷</button><button>↗ Link</button></div><textarea className="rich-textarea" rows={8} value={p.storyContent} onChange={e=>p.setStoryContent(e.target.value)}/></Field></div><div className="preview-panel"><PreviewHeader label="ARTICLE PREVIEW"/><article className="article-preview"><span>HOW WE WORK</span><h2>{p.storyTitle}</h2><p className="article-excerpt">{p.storyExcerpt}</p><div className="article-meta"><b>JL</b><span>Jordan Lee<br/><small>6 min read</small></span></div><div className="article-cover">04 <i>✦</i></div><p>{p.storyContent}</p></article></div></div>}
+
+function UpdatesView(){const[filter,setFilter]=useState('All');return <section className="listing shell"><PageIntro eyebrow="PRODUCT UPDATES" title="Follow what’s changing" description="See progress, learnings and next steps across the tools your teams use."/><div className="filter-pills">{['All','New feature','Improvement','Research'].map(x=><button key={x} className={filter===x?'selected':''} onClick={()=>setFilter(x)}>{x}</button>)}</div><div className="update-feed">{updates.filter(u=>filter==='All'||u.tag===filter).map(u=><article key={u.title}><div className="timeline-dot" style={{background:u.color}}/><div><small>{u.month}</small><span style={{color:u.color}}>{u.product}</span><h2>{u.title}</h2><p>{u.summary}</p><footer><b>{u.tag}</b><button>View update →</button></footer></div></article>)}</div></section>}
+function HeroArt({compact=false}:{compact?:boolean}){return <div className={`hero-art ${compact?'compact':''}`}><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="spark s1">✦</div><div className="spark s2">✧</div><div className="spark s3">✦</div><div className="core"><span>AI</span><small>made useful</small></div>{!compact&&<><div className="floating-card card-one"><b>24</b><span>ideas explored</span></div><div className="floating-card card-two"><b>8 min</b><span>time saved</span></div></>}</div>}
+function ProductGrid({products,onOpen}:{products:Product[],onOpen?:()=>void}){return <div className="product-grid">{products.map(p=><article className="product-card" key={p.name} style={{'--accent':p.color} as React.CSSProperties}><div className="product-icon">{p.icon}</div><span className="tag">{p.tag}</span><h3>{p.name}</h3><p>{p.text}</p><button onClick={onOpen}>View product <span>↗</span></button></article>)}</div>}
+function StoryGrid(){return <div className="story-grid">{stories.map((s,i)=><article className="story-card" key={s.title}><div className={`story-art ${s.tone}`}><span>0{i+1}</span><i>✦</i></div><div className="story-body"><small>{s.category}</small><h3>{s.title}</h3><p>{s.excerpt}</p><footer><span>{s.time}</span><b>Read story ↗</b></footer></div></article>)}</div>}
+function SectionHeading({eyebrow,title,action,onAction}:{eyebrow:string,title:string,action?:string,onAction?:()=>void}){return <div className="section-head"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div>{action&&<button onClick={onAction}>{action}</button>}</div>}
+function PageIntro({eyebrow,title,description}:{eyebrow:string,title:string,description:string}){return <div className="page-intro"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{description}</p></div>}
+function PanelTitle({step,title,subtitle}:{step:string,title:string,subtitle:string}){return <div className="panel-title"><span>{step}</span><div><h2>{title}</h2><p>{subtitle}</p></div></div>}
+function Field({label,children}:{label:string,children:React.ReactNode}){return <label className="field"><span>{label}</span>{children}</label>}
+function PreviewHeader({label}:{label:string}){return <div className="preview-header"><span><i/> {label}</span><b>DESKTOP</b></div>}
